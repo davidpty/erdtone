@@ -92,6 +92,7 @@ Notes:
 
 - Each digit is written to EEPROM immediately.
 - `*` and `#` can be stored by dialing `1` or `2`, holding until the first beep, then releasing.
+- When played back, `*` or `#` introduces a 1 second pause before that tone and all subsequent tones.
 - Hold `0` until the first beep to clear the current slot. A normal `0` release still stores `0`.
 - First beep = play mode, second beep = program mode.
 
