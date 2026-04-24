@@ -75,10 +75,10 @@ Use the rotary dial for special functions:
   - `1` = send `*`
   - `2` = send `#`
   - `3` = redial last number
-  - `0`, `4` to `9` = dial the stored speed-dial number
-- Keep holding until the second beep to enter programming:
-  - `0`, `4` to `9` = select the speed-dial slot to modify
-  - `3` = enters hotline setup
+  - `4` to `9`, `0` = dial the stored speed-dial number
+- Keep holding until the second beep:
+  - `4` to `9`, `0` = enter programming mode for that slot
+  - `3` = enter hotline setup
         
 ### Speed dial programming
 
