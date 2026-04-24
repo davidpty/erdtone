@@ -14,10 +14,10 @@ CLOCK_MODE ?= 4
 
 ifeq ($(CLOCK_MODE),4)
     CLOCK = 4000000
-    FUSES = -U lfuse:w:0xFF:m -U hfuse:w:0xDF:m -U efuse:w:0xFF:m
+    FUSES = -U lfuse:w:0xFF:m -U hfuse:w:0xD7:m -U efuse:w:0xFF:m
 else
     CLOCK = 8000000
-    FUSES = -U lfuse:w:0xFD:m -U hfuse:w:0xDF:m -U efuse:w:0xFF:m
+    FUSES = -U lfuse:w:0xFD:m -U hfuse:w:0xD7:m -U efuse:w:0xFF:m
 endif
 
 # -------- Programmer --------
@@ -54,7 +54,10 @@ flash: all
 fuse:
 	$(AVRDUDE) $(FUSES)
 
-install: flash fuse
+erase:
+	$(AVRDUDE) -U eeprom:w:0xFF:m
+
+install: clean flash fuse
 
 clean:
 	rm -f *.o *.elf *.hex
