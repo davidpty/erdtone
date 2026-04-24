@@ -60,7 +60,7 @@
 #define SLEEP_1S                    0x02
 #define SLEEP_2S                    0x03
 
-#define SPECIAL_L1_HOLD_TIME        SLEEP_1S
+#define SPECIAL_L1_HOLD_TIME        SLEEP_2S
 #define SPECIAL_L2_HOLD_TIME        SLEEP_2S
 
 #define DTMF_DURATION_MS            100
@@ -406,11 +406,13 @@ static void process_dialed_digit(runstate_t *rs)
             // SF 3 (Redial)
             wdt_stop();
             dial_speed_dial_number(rs->speed_dial_digits, SPEED_DIAL_REDIAL, false);
+            rs->state = STATE_DIAL;
         }
         else if (_g_speed_dial_loc[rs->dialed_digit] >= 0)
         {
             // Call speed dial number
             dial_speed_dial_number(rs->speed_dial_digits, _g_speed_dial_loc[rs->dialed_digit], true);
+            rs->state = STATE_DIAL;
         }
     }
     else if (rs->state == STATE_SPECIAL_L2)

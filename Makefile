@@ -55,9 +55,10 @@ fuse:
 	$(AVRDUDE) $(FUSES)
 
 erase:
-	$(AVRDUDE) -U eeprom:w:0xFF:m
+	dd if=/dev/zero bs=512 count=1 | tr '\000' '\377' | $(AVRDUDE) -U eeprom:w:/dev/stdin:r
 
 install: clean flash fuse
+	@echo "NOTE: EEPROM preserved. Run 'make erase' to clear stored numbers."
 
 clean:
 	rm -f *.o *.elf *.hex
