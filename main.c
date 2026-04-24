@@ -518,6 +518,12 @@ static void dial_speed_dial_number(int8_t *speed_dial_digits, int8_t index)
     {
         eeprom_read_block(speed_dial_digits, &_g_speed_dial_eeprom[index][0], SPEED_DIAL_SIZE);
 
+        // Also save to redial memory for convenient replay
+        if (index != SPEED_DIAL_REDIAL)
+        {
+            write_current_speed_dial(speed_dial_digits, SPEED_DIAL_REDIAL);
+        }
+
         for (uint8_t i = 0; i < SPEED_DIAL_SIZE; i++)
         {
             // Dial the number
