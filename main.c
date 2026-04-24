@@ -99,7 +99,7 @@ static uint16_t hotline_delay_ms(uint8_t delay_digit);
 static bool wait_for_hotline_window(uint16_t delay_ms);
 static void suppress_first_release_if_needed(runstate_t *rs, bool dial_pin_state);
 static void maybe_dial_hotline(void);
-static void dial_speed_dial_number(int8_t *speed_dial_digits, int8_t index);
+static void dial_speed_dial_number(int8_t *speed_dial_digits, int8_t index, bool save_to_redial);
 static void write_current_speed_dial(int8_t *speed_dial_digits, int8_t index);
 static void wdt_timer_start(uint8_t delay);
 static void start_sleep(void);
@@ -200,7 +200,7 @@ int main(void)
                         eeprom_read_block(rs->speed_dial_digits, 
                             &_g_speed_dial_eeprom[SPEED_DIAL_REDIAL][0], 
                             SPEED_DIAL_SIZE);
-                        dial_speed_dial_number(rs->speed_dial_digits, SPEED_DIAL_REDIAL);
+                        dial_speed_dial_number(rs->speed_dial_digits, SPEED_DIAL_REDIAL, false);
                     }
                     else
                     {
@@ -410,12 +410,12 @@ static void process_dialed_digit(runstate_t *rs)
         else if (rs->dialed_digit == L2_REDIAL)
         {
             // SF 3 (Redial)
-            dial_speed_dial_number(rs->speed_dial_digits, SPEED_DIAL_REDIAL);
+            dial_speed_dial_number(rs->speed_dial_digits, SPEED_DIAL_REDIAL, false);
         }
         else if (_g_speed_dial_loc[rs->dialed_digit] >= 0)
         {
             // Call speed dial number
-            dial_speed_dial_number(rs->speed_dial_digits, _g_speed_dial_loc[rs->dialed_digit]);
+            dial_speed_dial_number(rs->speed_dial_digits, _g_speed_dial_loc[rs->dialed_digit], true);
         }
     }
     else if (rs->state == STATE_SPECIAL_L2)
@@ -512,14 +512,14 @@ static void process_dialed_digit(runstate_t *rs)
 }
 
 // Dial speed dial number (it erases current SD number in the global structure)
-static void dial_speed_dial_number(int8_t *speed_dial_digits, int8_t index)
+static void dial_speed_dial_number(int8_t *speed_dial_digits, int8_t index, bool save_to_redial)
 {
     if (index >= 0 && index < SPEED_DIAL_COUNT)
     {
         eeprom_read_block(speed_dial_digits, &_g_speed_dial_eeprom[index][0], SPEED_DIAL_SIZE);
 
         // Also save to redial memory for convenient replay
-        if (index != SPEED_DIAL_REDIAL)
+        if (save_to_redial && index != SPEED_DIAL_REDIAL)
         {
             write_current_speed_dial(speed_dial_digits, SPEED_DIAL_REDIAL);
         }
@@ -648,7 +648,7 @@ static void maybe_dial_hotline(void)
     }
 
     // Held through delay - dial hotline
-    dial_speed_dial_number(_g_run_state.speed_dial_digits, hotline_index);
+    dial_speed_dial_number(_g_run_state.speed_dial_digits, hotline_index, false);
     _g_run_state.suppress_first_release = true;
 }
 
