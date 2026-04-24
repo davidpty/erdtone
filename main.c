@@ -315,7 +315,18 @@ static void process_dialed_digit(runstate_t *rs)
         // Generate DTMF code
         dtmf_generate_tone(rs->dialed_digit, DTMF_DURATION_MS);
 
-        if (rs->speed_dial_digit_index < SPEED_DIAL_SIZE)
+        if (rs->dialed_digit == L2_STAR || rs->dialed_digit == L2_POUND)
+        {
+            // Store * or # in redial memory
+            if (rs->speed_dial_digit_index < SPEED_DIAL_SIZE)
+            {
+                rs->speed_dial_digits[rs->speed_dial_digit_index] =
+                    (rs->dialed_digit == L2_STAR) ? DIGIT_STAR : DIGIT_POUND;
+                rs->speed_dial_digit_index++;
+                write_current_speed_dial(rs->speed_dial_digits, SPEED_DIAL_REDIAL);
+            }
+        }
+        else if (rs->speed_dial_digit_index < SPEED_DIAL_SIZE)
         {
             // During regular dial always save into the 'Redial' position of the speed dial memory
             rs->speed_dial_digits[rs->speed_dial_digit_index] = rs->dialed_digit;
