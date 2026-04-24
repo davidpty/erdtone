@@ -435,22 +435,6 @@ static void process_dialed_digit(runstate_t *rs)
             rs->program_special_insert = false;
         }
 
-        // Clear hotline - hold 2nd beep at hotline slot then dial 0
-        if (rs->special_hold_state == STATE_HOTLINE_SLOT && rs->dialed_digit == 0)
-        {
-            hotline_config_t config;
-
-            load_hotline_config(&config);
-            config.enabled = 0;
-            config.slot_digit = DIGIT_OFF;
-            config.delay_digit = DIGIT_OFF;
-            write_hotline_config(&config);
-            dtmf_generate_tone(DIGIT_TUNE_DESC, 800);
-            rs->hotline_slot_digit = DIGIT_OFF;
-            rs->state = STATE_DIAL;
-            return;
-        }
-
         if (rs->dialed_digit == L2_REDIAL)
         {
             rs->state = STATE_HOTLINE_SLOT;
@@ -495,7 +479,22 @@ static void process_dialed_digit(runstate_t *rs)
     }
     else if (rs->state == STATE_HOTLINE_SLOT)
     {
-        if (_g_speed_dial_loc[rs->dialed_digit] >= 0)
+        // Clear hotline on dial 0 BEFORE speed dial lookup
+        if (rs->dialed_digit == 0)
+        {
+            hotline_config_t config;
+
+            load_hotline_config(&config);
+            config.enabled = 0;
+            config.slot_digit = DIGIT_OFF;
+            config.delay_digit = DIGIT_OFF;
+            write_hotline_config(&config);
+            dtmf_generate_tone(DIGIT_TUNE_DESC, 800);
+            rs->hotline_slot_digit = DIGIT_OFF;
+            rs->state = STATE_DIAL;
+            return;
+        }
+        else if (_g_speed_dial_loc[rs->dialed_digit] >= 0)
         {
             // Select the stored number that will become the hotline number
             rs->hotline_slot_digit = rs->dialed_digit;
