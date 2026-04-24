@@ -64,7 +64,7 @@
 #define SPECIAL_L2_HOLD_TIME        SLEEP_2S
 
 #define DTMF_DURATION_MS             100
-#define MENU_EXTRA_PAUSE_MS          750
+#define DTMF_MENU_PAUSE_MS           750
 
 #define SPEED_DIAL_COUNT            8 // 8 Positions in total (Redail(3),4,5,6,7,8,9,0)
 #define SPEED_DIAL_REDIAL           (SPEED_DIAL_COUNT - 1)
@@ -559,7 +559,7 @@ static void dial_speed_dial_number(int8_t *speed_dial_digits, int8_t index, bool
             // - Next digit is * or # (about to enter menu)
             if (menu_mode || is_star_pound || next_is_star_pound)
             {
-                sleep_ms(MENU_EXTRA_PAUSE_MS);
+                sleep_ms(DTMF_MENU_PAUSE_MS);
             }
 
             // Send the tone
