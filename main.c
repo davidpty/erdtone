@@ -553,8 +553,8 @@ static void dial_speed_dial_number(int8_t *speed_dial_digits, int8_t index, bool
 
         for (uint8_t i = 0; i < SPEED_DIAL_SIZE; i++)
         {
-            // Skip invalid digits
-            if (speed_dial_digits[i] < 0 || speed_dial_digits[i] > DIGIT_POUND)
+            // Skip invalid digits (negative or > 11, but allow DIGIT_PAUSE=12)
+            if (speed_dial_digits[i] < 0 || (speed_dial_digits[i] > DIGIT_POUND && speed_dial_digits[i] != DIGIT_PAUSE))
                 continue;
 
             // Handle pause

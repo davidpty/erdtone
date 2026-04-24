@@ -29,7 +29,7 @@
 #define DIGIT_TUNE_ASC      -11
 #define DIGIT_TUNE_DESC     -12
 #define DIGIT_OFF           -1
-#define DIGIT_PAUSE         -2
+#define DIGIT_PAUSE         12
 #define DIGIT_STAR          10
 #define DIGIT_POUND         11
 
