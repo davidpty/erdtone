@@ -92,9 +92,9 @@ Notes:
 
 - Each digit is written to EEPROM immediately.
 - `*` and `#` can be stored by dialing `1` or `2`, holding until the first beep, then releasing.
-- When played back, `*` or `#` introduces a 1 second pause before that tone and all subsequent tones.
-- Hold `0` until the first beep to clear the current slot. A normal `0` release still stores `0`.
-- First beep = play mode, second beep = program mode.
+- Pause can be stored by dialing `3`, holding until the first beep, then releasing (2 second pause).
+- Multiple pauses can be stored for longer delays.
+- Hold `0` until the second beep to clear the current slot.
 
 ### Hotline setup
 
@@ -112,8 +112,6 @@ Clear it:
 
 1. Dial `3`.
 2. Keep holding until the second beep, then release.
-3. Hold `0` until the first beep, then release to clear it.
-
-Default hotline delay: `5` seconds
+3. Hold `0` until the second beep, then release to clear it.
 
 Pressing `Earth key` or starting to dial during startup cancels the hotline call for that cycle.
