@@ -204,6 +204,7 @@ int main(void)
                     if (rs->state == STATE_DIAL && !rs->suppress_first_release)
                     {
                         // Erdtaste short press - trigger redial
+                        wdt_stop();
                         eeprom_read_block(rs->speed_dial_digits, 
                             &_g_speed_dial_eeprom[SPEED_DIAL_REDIAL][0], 
                             SPEED_DIAL_SIZE);
@@ -404,6 +405,7 @@ static void process_dialed_digit(runstate_t *rs)
         else if (rs->dialed_digit == L2_REDIAL)
         {
             // SF 3 (Redial)
+            wdt_stop();
             dial_speed_dial_number(rs->speed_dial_digits, SPEED_DIAL_REDIAL, false);
         }
         else if (_g_speed_dial_loc[rs->dialed_digit] >= 0)
@@ -683,6 +685,7 @@ static void maybe_dial_hotline(void)
     }
 
     // Held through delay - dial hotline
+    wdt_stop();
     dial_speed_dial_number(_g_run_state.speed_dial_digits, hotline_index, false);
     _g_run_state.suppress_first_release = true;
 }

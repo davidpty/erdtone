@@ -29,9 +29,9 @@
 #define DIGIT_TUNE_ASC      -11
 #define DIGIT_TUNE_DESC     -12
 #define DIGIT_OFF           -1
-#define DIGIT_PAUSE         12
 #define DIGIT_STAR          10
 #define DIGIT_POUND         11
+#define DIGIT_PAUSE         12
 
 // PWM frequency = 4Mhz/256 = 15625Hz; overflow cycles per MS = 15
 #if F_CPU == 8000000

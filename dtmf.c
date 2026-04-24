@@ -160,11 +160,7 @@ void dtmf_generate_tone(int8_t digit, uint16_t duration_ms)
 {
     GIMSK = 0; 
 
-    if (digit == DIGIT_PAUSE)
-    {
-        // Pause - do nothing, caller handles the delay
-    }
-    else if (digit >= 0 && digit <= DIGIT_POUND)
+    if (digit >= 0 && digit <= DIGIT_POUND)
     {
         // Standard digits 0-9, *, #
         _g_stepwidth_a = auc_frequency[digit][0];  
