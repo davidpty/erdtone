@@ -37,19 +37,19 @@ CFLAGS = -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
 
 # -------- Targets --------
 
-all: pulse-dtmf.hex
+all: pulse2dtmf.hex
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-pulse-dtmf.elf: $(OBJS)
+pulse2dtmf.elf: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS)
 
-pulse-dtmf.hex: pulse-dtmf.elf
+pulse2dtmf.hex: pulse2dtmf.elf
 	$(OBJCOPY) -j .text -j .data -O ihex $< $@
 
 flash: all
-	$(AVRDUDE) -U flash:w:pulse-dtmf.hex:i
+	$(AVRDUDE) -U flash:w:pulse2dtmf.hex:i
 
 fuse:
 	$(AVRDUDE) $(FUSES)
@@ -59,7 +59,7 @@ install: flash fuse
 clean:
 	rm -f *.o *.elf *.hex
 
-disasm: pulse-dtmf.elf
+disasm: pulse2dtmf.elf
 	$(OBJDUMP) -d $<
 
 cpp:
