@@ -32,7 +32,7 @@
 #define DIGIT_STAR          10
 #define DIGIT_POUND         11
 
-#define DTMF_DURATION_MS    250
+#define DTMF_DURATION_MS    100
 #define MENU_EXTRA_PAUSE_MS 750   // Extra pause for menu navigation (ADDED to normal)
 
 // PWM frequency = 4Mhz/256 = 15625Hz; overflow cycles per MS = 15

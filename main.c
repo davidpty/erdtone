@@ -57,7 +57,11 @@
 
 #define SLEEP_64MS                  0x00
 #define SLEEP_128MS                 0x01
-#define SLEEP_2S                    0x02
+#define SLEEP_1S                    0x02
+#define SLEEP_2S                    0x03
+
+#define SPECIAL_L1_HOLD_TIME        SLEEP_1S
+#define SPECIAL_L2_HOLD_TIME        SLEEP_2S
 
 #define SPEED_DIAL_COUNT            8 // 8 Positions in total (Redail(3),4,5,6,7,8,9,0)
 #define SPEED_DIAL_REDIAL           (SPEED_DIAL_COUNT - 1)
@@ -247,7 +251,7 @@ int main(void)
         {
             rs->flags &= ~F_WDT_AWAKE;
             // Put MCU to sleep - to be awoken either by pin interrupt or WDT
-            wdt_timer_start(SLEEP_2S);
+            wdt_timer_start(SPECIAL_L1_HOLD_TIME);
             start_sleep();
 
             // Special function mode detected?
@@ -276,7 +280,7 @@ int main(void)
         {
             rs->flags &= ~F_WDT_AWAKE;
             // Put MCU to sleep - to be awoken either by pin interrupt or WDT
-            wdt_timer_start(SLEEP_2S);
+            wdt_timer_start(SPECIAL_L2_HOLD_TIME);
             start_sleep();
 
             if (rs->flags & F_WDT_AWAKE)
@@ -722,6 +726,9 @@ static void wdt_timer_start(uint8_t delay)
             break;
         case SLEEP_128MS:
             WDTCR = _BV(WDIE) | _BV(WDP1) | _BV(WDP0);
+            break;
+        case SLEEP_1S:
+            WDTCR = _BV(WDIE) | _BV(WDP0) | _BV(WDP2); // 1024ms
             break;
         case SLEEP_2S:
             WDTCR = _BV(WDIE) | _BV(WDP0) | _BV(WDP1) | _BV(WDP2); // 2048ms
