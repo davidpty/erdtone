@@ -64,6 +64,7 @@
 #define SPECIAL_L2_HOLD_TIME        SLEEP_2S
 
 #define DTMF_DURATION_MS             100
+#define DTMF_PAUSE_MS              2000  // Pause inserted in speed dial memory
 
 #define SPEED_DIAL_COUNT            8 // 8 Positions in total (Redail(3),4,5,6,7,8,9,0)
 #define SPEED_DIAL_REDIAL           (SPEED_DIAL_COUNT - 1)
@@ -365,6 +366,26 @@ static void process_dialed_digit(runstate_t *rs)
                 return;
             }
 
+            if (rs->dialed_digit == 0)
+            {
+                // Insert pause
+                if (rs->speed_dial_digit_index >= SPEED_DIAL_SIZE)
+                {
+                    rs->state = STATE_DIAL;
+                    rs->program_special_insert = false;
+                    dtmf_generate_tone(DIGIT_TUNE_DESC, 800);
+                    return;
+                }
+
+                rs->speed_dial_digits[rs->speed_dial_digit_index] = DIGIT_PAUSE;
+                rs->speed_dial_digit_index++;
+                write_current_speed_dial(rs->speed_dial_digits, rs->speed_dial_index);
+                dtmf_generate_tone(DIGIT_BEEP, DTMF_DURATION_MS);
+                rs->state = STATE_PROGRAM_SD;
+                rs->program_special_insert = false;
+                return;
+            }
+
             rs->program_special_insert = false;
         }
 
@@ -535,6 +556,13 @@ static void dial_speed_dial_number(int8_t *speed_dial_digits, int8_t index, bool
             // Skip invalid digits
             if (speed_dial_digits[i] < 0 || speed_dial_digits[i] > DIGIT_POUND)
                 continue;
+
+            // Handle pause
+            if (speed_dial_digits[i] == DIGIT_PAUSE)
+            {
+                sleep_ms(DTMF_PAUSE_MS);
+                continue;
+            }
 
             // Send the tone
             dtmf_generate_tone(speed_dial_digits[i], DTMF_DURATION_MS);
