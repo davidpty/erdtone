@@ -78,6 +78,8 @@ Use the rotary dial for special functions:
   - `4` to `9`, `0` = dial the stored speed-dial number
 - Keep holding until the second beep:
   - `4` to `9`, `0` = enter programming mode for that slot
+  - `1` = cycle DTMF tone duration (80ms / 200ms). Confirmed by two beeps at the new duration.
+  - `2` = cycle menu hold time (1s / 2s). Confirmed by a single beep lasting the new hold duration.
   - `3` = enter hotline setup
         
 ### Speed dial programming
