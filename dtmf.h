@@ -33,6 +33,7 @@
 #define DIGIT_POUND         11
 
 #define DTMF_DURATION_MS    250
+#define MENU_EXTRA_PAUSE_MS 1000  // Extra pause for menu navigation (ADDED to normal)
 
 // PWM frequency = 4Mhz/256 = 15625Hz; overflow cycles per MS = 15
 #if F_CPU == 8000000

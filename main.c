@@ -524,15 +524,47 @@ static void dial_speed_dial_number(int8_t *speed_dial_digits, int8_t index, bool
             write_current_speed_dial(speed_dial_digits, SPEED_DIAL_REDIAL);
         }
 
+        // Track menu mode - enabled after * or # is encountered
+        bool menu_mode = false;
+
         for (uint8_t i = 0; i < SPEED_DIAL_SIZE; i++)
         {
-            // Dial the number
-            // Skip dialing invalid digits
-            if (speed_dial_digits[i] >= 0 && speed_dial_digits[i] <= DIGIT_POUND)
+            // Skip invalid digits
+            if (speed_dial_digits[i] < 0 || speed_dial_digits[i] > DIGIT_POUND)
+                continue;
+
+            bool is_star_pound = (speed_dial_digits[i] == DIGIT_STAR || speed_dial_digits[i] == DIGIT_POUND);
+            bool next_is_star_pound = false;
+
+            // Look ahead to check if next valid digit is * or #
+            for (uint8_t j = i + 1; j < SPEED_DIAL_SIZE; j++)
             {
-                dtmf_generate_tone(speed_dial_digits[i], DTMF_DURATION_MS);  
-                // Pause between DTMF tones
-                sleep_ms(DTMF_DURATION_MS);    
+                if (speed_dial_digits[j] >= 0 && speed_dial_digits[j] <= DIGIT_POUND)
+                {
+                    next_is_star_pound = (speed_dial_digits[j] == DIGIT_STAR || speed_dial_digits[j] == DIGIT_POUND);
+                    break;
+                }
+            }
+
+            // Apply extra pause BEFORE tone if:
+            // - Already in menu mode (triggered by previous * or #), OR
+            // - Current digit is * or #, OR
+            // - Next digit is * or # (about to enter menu)
+            if (menu_mode || is_star_pound || next_is_star_pound)
+            {
+                sleep_ms(MENU_EXTRA_PAUSE_MS);
+            }
+
+            // Send the tone
+            dtmf_generate_tone(speed_dial_digits[i], DTMF_DURATION_MS);
+
+            // Normal pause after tone (always added)
+            sleep_ms(DTMF_DURATION_MS);
+
+            // Update menu mode if we just sent * or #
+            if (is_star_pound)
+            {
+                menu_mode = true;
             }
         }
     }
