@@ -546,6 +546,24 @@ static void dial_speed_dial_number(int8_t *speed_dial_digits, int8_t index, bool
     {
         eeprom_read_block(speed_dial_digits, &_g_speed_dial_eeprom[index][0], SPEED_DIAL_SIZE);
 
+        // Check for empty speed dial  
+        bool empty = true;
+        for (uint8_t i = 0; i < SPEED_DIAL_SIZE; i++)
+        {
+            if (speed_dial_digits[i] >= 0)
+            {
+                empty = false;
+                break;
+            }
+        }
+
+        // Beep to indicate speed dial was empty
+        if (empty)
+        {
+            dtmf_generate_tone(DIGIT_TUNE_DESC, 400);
+            return;
+        }
+
         // Also save to redial memory for convenient replay
         if (save_to_redial && index != SPEED_DIAL_REDIAL)
         {
