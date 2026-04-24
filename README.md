@@ -91,9 +91,7 @@ Use the rotary dial for special functions:
 Notes:
 
 - Each digit is written to EEPROM immediately.
-- `*` and `#` can be stored by dialing `1` or `2`, holding until the first beep, then releasing.
-- Pause can be stored by dialing `3`, holding until the first beep, then releasing (2 second pause).
-- Multiple pauses can be stored for longer delays.
+- `*` and `#` or `pause` can be stored by dialing `1`, `2` or `3`, holding until the first beep, then releasing.
 - Hold `0` until the second beep to clear the current slot.
 
 ### Hotline setup

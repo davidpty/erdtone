@@ -63,8 +63,8 @@
 #define SPECIAL_L1_HOLD_TIME        SLEEP_1S
 #define SPECIAL_L2_HOLD_TIME        SLEEP_2S
 
-#define DTMF_DURATION_MS             100
-#define DTMF_PAUSE_MS              2000  // Pause inserted in speed dial memory
+#define DTMF_DURATION_MS            100
+#define DTMF_PAUSE_MS               2000  // Pause inserted in speed dial memory
 
 #define SPEED_DIAL_COUNT            8 // 8 Positions in total (Redail(3),4,5,6,7,8,9,0)
 #define SPEED_DIAL_REDIAL           (SPEED_DIAL_COUNT - 1)
