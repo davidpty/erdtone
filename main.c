@@ -63,6 +63,9 @@
 #define SPECIAL_L1_HOLD_TIME        SLEEP_1S
 #define SPECIAL_L2_HOLD_TIME        SLEEP_2S
 
+#define DTMF_DURATION_MS             100
+#define MENU_EXTRA_PAUSE_MS          750
+
 #define SPEED_DIAL_COUNT            8 // 8 Positions in total (Redail(3),4,5,6,7,8,9,0)
 #define SPEED_DIAL_REDIAL           (SPEED_DIAL_COUNT - 1)
 
