@@ -291,7 +291,6 @@ int main(void)
             {
                 // SF mode detected
                 rs->flags &= ~F_WDT_AWAKE;
-                rs->special_hold_state = rs->state;
                 rs->state = STATE_SPECIAL_L2;
                 rs->flags &= ~F_DETECT_SPECIAL_L2;
 
@@ -416,31 +415,46 @@ static void process_dialed_digit(runstate_t *rs)
     }
     else if (rs->state == STATE_SPECIAL_L2)
     {
-        // Clear SD slot - hold 2nd beep then dial 0
-        if (rs->program_special_insert)
+        // Clear hotline - hold 3 then hold 0 (before entering hotline slot)
+        if (rs->program_special_insert && rs->dialed_digit == 0 && rs->special_hold_state == STATE_HOTLINE_SLOT)
         {
-            if (rs->dialed_digit == 0)
-            {
-                for (uint8_t i = 0; i < SPEED_DIAL_SIZE; i++)
-                    rs->speed_dial_digits[i] = DIGIT_OFF;
+            hotline_config_t config;
 
-                rs->speed_dial_digit_index = 0;
-                write_current_speed_dial(rs->speed_dial_digits, rs->speed_dial_index);
-                dtmf_generate_tone(DIGIT_TUNE_DESC, 400);
-                rs->state = STATE_PROGRAM_SD;
-                rs->program_special_insert = false;
-                return;
-            }
-
+            load_hotline_config(&config);
+            config.enabled = 0;
+            config.slot_digit = DIGIT_OFF;
+            config.delay_digit = DIGIT_OFF;
+            write_hotline_config(&config);
+            dtmf_generate_tone(DIGIT_TUNE_DESC, 800);
+            rs->hotline_slot_digit = DIGIT_OFF;
+            rs->state = STATE_DIAL;
             rs->program_special_insert = false;
+            return;
+        }
+
+        // Clear SD slot - hold 2nd beep then dial 0
+        if (rs->program_special_insert && rs->dialed_digit == 0 && rs->special_hold_state == STATE_PROGRAM_SD)
+        {
+            for (uint8_t i = 0; i < SPEED_DIAL_SIZE; i++)
+                rs->speed_dial_digits[i] = DIGIT_OFF;
+
+            rs->speed_dial_digit_index = 0;
+            write_current_speed_dial(rs->speed_dial_digits, rs->speed_dial_index);
+            dtmf_generate_tone(DIGIT_TUNE_DESC, 400);
+            rs->state = STATE_DIAL;
+            rs->program_special_insert = false;
+            return;
         }
 
         if (rs->dialed_digit == L2_REDIAL)
         {
+            rs->special_hold_state = STATE_HOTLINE_SLOT;
             rs->state = STATE_HOTLINE_SLOT;
+            rs->program_special_insert = true;
         }
         else if (_g_speed_dial_loc[rs->dialed_digit] >= 0)
         {
+            rs->special_hold_state = STATE_PROGRAM_SD;
             rs->speed_dial_index = _g_speed_dial_loc[rs->dialed_digit];
             rs->speed_dial_digit_index = 0;
 
@@ -448,6 +462,7 @@ static void process_dialed_digit(runstate_t *rs)
                 rs->speed_dial_digits[i] = DIGIT_OFF;
 
             rs->state = STATE_PROGRAM_SD;
+            rs->program_special_insert = true;
         }
         else
         {
@@ -479,22 +494,7 @@ static void process_dialed_digit(runstate_t *rs)
     }
     else if (rs->state == STATE_HOTLINE_SLOT)
     {
-        // Clear hotline on dial 0 BEFORE speed dial lookup
-        if (rs->dialed_digit == 0)
-        {
-            hotline_config_t config;
-
-            load_hotline_config(&config);
-            config.enabled = 0;
-            config.slot_digit = DIGIT_OFF;
-            config.delay_digit = DIGIT_OFF;
-            write_hotline_config(&config);
-            dtmf_generate_tone(DIGIT_TUNE_DESC, 800);
-            rs->hotline_slot_digit = DIGIT_OFF;
-            rs->state = STATE_DIAL;
-            return;
-        }
-        else if (_g_speed_dial_loc[rs->dialed_digit] >= 0)
+        if (_g_speed_dial_loc[rs->dialed_digit] >= 0)
         {
             // Select the stored number that will become the hotline number
             rs->hotline_slot_digit = rs->dialed_digit;
@@ -768,6 +768,7 @@ ISR(INT0_vect)
         _g_run_state.flags = F_NONE;
         // A pulse just started
         _g_run_state.dialed_digit++;
+        wdt_reset();
     }
 }
 
