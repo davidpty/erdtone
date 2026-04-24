@@ -366,9 +366,9 @@ static void process_dialed_digit(runstate_t *rs)
                 return;
             }
 
-            if (rs->dialed_digit == 0)
+            if (rs->dialed_digit == L2_REDIAL)
             {
-                // Insert pause
+                // Insert pause on dial 3
                 if (rs->speed_dial_digit_index >= SPEED_DIAL_SIZE)
                 {
                     rs->state = STATE_DIAL;
