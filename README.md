@@ -7,7 +7,7 @@ hidden inside the phone with no visible modifications.
 Built around the Siemens W48 with full support for the `Earth key` (German: Erdtaste),
 it goes beyond basic pulse conversion: last-number redial, speed dial with pause 
 support, `*` and `#` via hold gestures, auto-dial hotline on pickup, and adjustable 
-DTMF timing for compatibility with older exchanges — all configured directly from 
+DTMF timing for compatibility with older exchanges. All configured directly from 
 the rotary dial, no computer needed after flashing.
 
 This project stands on the shoulders of [Boris Cherkasskiy](http://boris0.blogspot.ca/2013/09/rotary-dial-for-digital-age.html)
