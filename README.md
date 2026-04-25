@@ -1,6 +1,20 @@
-# Rotary Dial Pulse-to-DTMF Converter
+# ErdTone - Rotary Dial Pulse-to-DTMF Converter
 
-This build was designed for the Siemens W48 rotary phone with support for `Earth key` (German: Erdtaste). It turns pulse dialing into DTMF, stores the last number for redial, supports speed dial, `*` and `#`, and can auto-dial a hotline on power-up.
+Bring a vintage rotary phone back to life on a modern telephone exchange. ErdTone 
+converts pulse dialing to DTMF tones in real time, running on a single ATtiny85 
+hidden inside the phone with no visible modifications.
+
+Built around the Siemens W48 with full support for the `Earth key` (German: Erdtaste),
+it goes beyond basic pulse conversion: last-number redial, speed dial with pause 
+support, `*` and `#` via hold gestures, auto-dial hotline on pickup, and adjustable 
+DTMF timing for compatibility with older exchanges — all configured directly from 
+the rotary dial, no computer needed after flashing.
+
+This project stands on the shoulders of [Boris Cherkasskiy](http://boris0.blogspot.ca/2013/09/rotary-dial-for-digital-age.html)
+who created the original firmware in 2011, [Arnie Weber](https://bitbucket.org/310weber/rotary_dial/)
+who reworked the hardware in 2015, and [Matthew Millman](http://tech.mattmillman.com/)
+who cleaned up the implementation in 2018. ErdTone extends this lineage with hotline 
+auto-dial, Earth key redial, and configurable DTMF and menu timing.
 
 ## Hardware
 
@@ -15,6 +29,11 @@ Needed build parts:
 - 4x 0.1 uF (100 nF) ceramic capacitors
 - 1x 4 position terminal
 - 1x 1N4007 diode
+
+## Circuit
+
+A Fritzing layout is included with a compact footprint designed to fit inside the 
+W48 housing without modifications. See `ErdTone.fzz` (or whatever your filename is).
 
 ## Wiring
 
@@ -78,8 +97,8 @@ Use the rotary dial for special functions:
   - `4` to `9`, `0` = dial the stored speed-dial number
 - Keep holding until the second beep:
   - `4` to `9`, `0` = enter programming mode for that slot
-  - `1` = cycle DTMF tone duration (80ms / 200ms). Confirmed by two beeps at the new duration.
-  - `2` = cycle menu hold time (1s / 2s). Confirmed by a single beep lasting the new hold duration.
+  - `1` = cycle DTMF tone duration (80ms / 200ms). Two quick beeps = 80ms, two slow beeps = 200ms.
+  - `2` = cycle menu hold time (1s / 2s). Two quick beeps = 1s, two slow beeps = 2s.
   - `3` = enter hotline setup
         
 ### Speed dial programming

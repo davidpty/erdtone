@@ -37,25 +37,27 @@ CFLAGS = -Wall -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
 
 # -------- Targets --------
 
-all: pulse2dtmf.hex
+all: erdtone.hex
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-pulse2dtmf.elf: $(OBJS)
+erdtone.elf: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS)
 
-pulse2dtmf.hex: pulse2dtmf.elf
+erdtone.hex: erdtone.elf
 	$(OBJCOPY) -j .text -j .data -O ihex $< $@
 
 flash: all
-	$(AVRDUDE) -U flash:w:pulse2dtmf.hex:i
+	$(AVRDUDE) -U flash:w:erdtone.hex:i
 
 fuse:
 	$(AVRDUDE) $(FUSES)
 
 erase:
-	dd if=/dev/zero bs=512 count=1 | tr '\000' '\377' | $(AVRDUDE) -U eeprom:w:/dev/stdin:r
+	dd if=/dev/zero bs=512 count=1 | tr '\000' '\377' > /tmp/eeprom_blank.bin
+	$(AVRDUDE) -U eeprom:w:/tmp/eeprom_blank.bin:r
+	rm /tmp/eeprom_blank.bin
 
 install: clean flash fuse
 	@echo "NOTE: EEPROM preserved. Run 'make erase' to clear stored numbers."
@@ -63,7 +65,7 @@ install: clean flash fuse
 clean:
 	rm -f *.o *.elf *.hex
 
-disasm: pulse2dtmf.elf
+disasm: erdtone.elf
 	$(OBJDUMP) -d $<
 
 cpp:

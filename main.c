@@ -437,8 +437,11 @@ static void process_dialed_digit(runstate_t *rs)
             if (index >= 1) index = 0; else index++;
             eeprom_write_byte(&_g_dtmf_duration_eeprom, index);
             rs->dtmf_duration = (index == 0) ? DTMF_DURATION_MS_SHORT : DTMF_DURATION_MS_LONG;
-            dtmf_generate_tone(DIGIT_BEEP, rs->dtmf_duration);
-            dtmf_generate_tone(DIGIT_BEEP, rs->dtmf_duration);
+            uint16_t beep_dur = (index == 0) ? 80 : 300;
+            uint16_t gap = (index == 0) ? 150 : 300;
+            dtmf_generate_tone(DIGIT_BEEP, beep_dur);
+            sleep_ms(gap);
+            dtmf_generate_tone(DIGIT_BEEP, beep_dur);
             rs->state = STATE_DIAL;
             return;
         }
@@ -450,11 +453,14 @@ static void process_dialed_digit(runstate_t *rs)
             if (index >= 1) index = 0; else index++;
             eeprom_write_byte(&_g_l1_hold_time_eeprom, index);
             rs->l1_hold_time = (index == 0) ? SLEEP_2S : SLEEP_1S;
-            uint16_t dur = (index == 0) ? 2000 : 1000;
-            dtmf_generate_tone(DIGIT_BEEP, dur);
+            uint16_t beep_dur = (index == 0) ? 300 : 80;
+            uint16_t gap = (index == 0) ? 300 : 150;
+            dtmf_generate_tone(DIGIT_BEEP, beep_dur);
+            sleep_ms(gap);
+            dtmf_generate_tone(DIGIT_BEEP, beep_dur);
             rs->state = STATE_DIAL;
             return;
-        }  
+        }
         // Clear hotline - hold 3 then hold 0 (before entering hotline slot)
         if (rs->program_special_insert && rs->dialed_digit == 0 && rs->special_hold_state == STATE_HOTLINE_SLOT)
         {
