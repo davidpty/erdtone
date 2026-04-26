@@ -7,14 +7,11 @@ hidden inside the phone with no visible modifications.
 Built around the Siemens W48 with full support for the `Earth key` (German: Erdtaste),
 it goes beyond basic pulse conversion: last-number redial, speed dial with pause 
 support, `*` and `#` via hold gestures, auto-dial hotline on pickup, and adjustable 
-DTMF timing for compatibility with older exchanges. All configured directly from 
-the rotary dial, no computer needed after flashing.
+DTMF timing for compatibility with older exchanges. Everything is configured directly 
+from the rotary dial - no computer needed after flashing.
 
-This project stands on the shoulders of [Boris Cherkasskiy](http://boris0.blogspot.ca/2013/09/rotary-dial-for-digital-age.html)
-who created the original firmware in 2011, [Arnie Weber](https://bitbucket.org/310weber/rotary_dial/)
-who reworked the hardware in 2015, and [Matthew Millman](http://tech.mattmillman.com/)
-who cleaned up the implementation in 2018. ErdTone extends this lineage with hotline 
-auto-dial, Earth key redial, and configurable DTMF and menu timing.
+This project is a fork of the rotarydial firmware, extended with hotline auto-dial,
+Earth key redial, Erdtaste speed dial, and configurable DTMF and menu timing.
 
 ## Hardware
 
@@ -33,7 +30,7 @@ Needed build parts:
 ## Circuit
 
 A Fritzing layout is included with a compact footprint designed to fit inside the 
-W48 housing without modifications. See `ErdTone.fzz` (or whatever your filename is).
+W48 housing without modifications. See `ErdTone.fzz`.
 
 ## Wiring
 
@@ -73,17 +70,28 @@ make install              # default 4 MHz (external crystal)
 make CLOCK_MODE=8 install # 8 MHz (internal oscillator)
 ```
 
+Erase EEPROM (clears all stored numbers and settings):
+```bash
+make erase
+```
+
 ## Operation
 
 ### Normal dialing
 
 Dial a number and release. The firmware sends the matching DTMF tone.
+If you pause for more than ~3 seconds between digits, a pause is automatically inserted 
+into the redial memory at that point. If you wait more than ~6 seconds, two pauses are inserted.
+This allows redial to correctly replay numbers that require waiting for an automated phone menu 
+or office switchboard to respond.
 
 ### Earth key
 
 `Earth key` is a quick redial shortcut.
 
 - Brief press and release: redial the last number
+- Hold until first beep: dial the stored Earth key speed dial number
+- Hold until second beep: program the Earth key speed dial number
 - If pressed during startup, hotline calling is canceled for that cycle.
 
 ### Rotary hold menu
@@ -113,7 +121,10 @@ Notes:
 
 - Each digit is written to EEPROM immediately.
 - `*` and `#` or `pause` can be stored by dialing `1`, `2` or `3`, holding until the first beep, then releasing.
-- Hold `0` until the second beep to clear the current slot.
+- The Earth key has its own dedicated speed dial slot programmed via Earth key hold to second beep.
+- Press `Earth key` during programming to load the last dialed number into the current slot. 
+  The number is saved immediately and you can continue adding digits, `*`, `#`, or pauses before hanging up.
+- Hold `0` until the second beep to clear the current slot (works for Earth key slot too).
 
 ### Hotline setup
 
@@ -123,7 +134,7 @@ Set it:
 
 1. Dial `3`.
 2. Hold until the second beep, then release.
-3. Dial the speed-dial slot.
+3. Dial the speed-dial slot, or press `Earth key` to use the Earth key speed dial number as the hotline.
 4. The hotline is now saved with the default `5` second delay.
 5. Optional: dial a delay digit from `0` to `9` to override it.
 
@@ -134,3 +145,10 @@ Clear it:
 3. Hold `0` until the second beep, then release to clear it.
 
 Pressing `Earth key` or starting to dial during startup cancels the hotline call for that cycle.
+
+## Credits
+
+ErdTone builds on the work of [Boris Cherkasskiy](http://boris0.blogspot.ca/2013/09/rotary-dial-for-digital-age.html)
+who created the original firmware in 2011, [Arnie Weber](https://bitbucket.org/310weber/rotary_dial/)
+who reworked the hardware in 2015, and [Matthew Millman](http://tech.mattmillman.com/)
+who cleaned up the implementation in 2018.

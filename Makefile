@@ -60,7 +60,6 @@ erase:
 	rm /tmp/eeprom_blank.bin
 
 install: clean flash fuse
-	@echo "NOTE: EEPROM preserved. Run 'make erase' to clear stored numbers."
 
 clean:
 	rm -f *.o *.elf *.hex
