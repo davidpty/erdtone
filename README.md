@@ -146,6 +146,28 @@ Clear it:
 
 Pressing `Earth key` or starting to dial during startup cancels the hotline call for that cycle.
 
+## Service Codes
+
+Service codes are entered during a normal call using the rotary hold menu for `*` and `#`.
+
+### Lock / Unlock
+
+Dial `*#PPP` where `PPP` is a 3-digit PIN using digits only.
+
+- First use: sets the PIN and locks the phone. Confirmed with ascending tune.
+- Same code again: unlocks and clears the PIN. Confirmed with descending tune.
+- Wrong PIN: no feedback, phone stays locked.
+
+When locked:
+- Normal dialing is blocked
+- Speed dial, redial, hotline and `Earth key` functions still work
+- Programming and settings changes are blocked
+- Factory reset is blocked
+
+### Factory reset
+
+Dial `*#0#*` to erase all stored numbers, speed dial slots, hotline config, and reset DTMF duration and menu hold time to defaults. Blocked when locked. Descending tune plays during reset, ascending tune confirms completion.
+
 ## Credits
 
 ErdTone builds on the work of [Boris Cherkasskiy](http://boris0.blogspot.ca/2013/09/rotary-dial-for-digital-age.html)

@@ -93,6 +93,7 @@ typedef struct
     bool dial_pin_state;
     bool suppress_first_release;
     bool program_special_insert;
+    bool locked;
     int8_t speed_dial_digits[SPEED_DIAL_SIZE];
     int8_t dialed_digit;
     int8_t service_code_buf[5];
@@ -109,7 +110,6 @@ static void init(void);
 static void process_dialed_digit(runstate_t *rs);
 static void store_digit_to_redial(runstate_t *rs, int8_t digit);
 static void push_to_service_buffer(runstate_t *rs, int8_t digit);
-static void check_service_codes(runstate_t *rs);
 static void clear_speed_dial_slot(runstate_t *rs, uint8_t slot_index);
 static void append_digit_to_slot(runstate_t *rs, int8_t digit, uint8_t tone);
 static void load_hotline_config(hotline_config_t *config);
@@ -121,7 +121,9 @@ static void maybe_dial_hotline(void);
 static void dial_speed_dial_number(int8_t *speed_dial_digits, int8_t index, bool save_to_redial, uint16_t dtmf_duration);
 static void write_current_speed_dial(int8_t *speed_dial_digits, int8_t index);
 static void flush_pending_pauses(runstate_t *rs);
+static void check_service_codes(runstate_t *rs);
 static void handle_factory_reset(runstate_t *rs);
+static void handle_lock_toggle(runstate_t *rs);
 static void wdt_timer_start(uint8_t delay);
 static void start_sleep(void);
 static void wdt_stop(void);
@@ -158,6 +160,8 @@ int8_t EEMEM _g_speed_dial_eeprom[SPEED_DIAL_COUNT][SPEED_DIAL_SIZE] = { [0 ... 
 hotline_config_t EEMEM _g_hotline_eeprom = { 0, 0, 5 };
 uint8_t EEMEM _g_dtmf_duration_eeprom = 0;   // 0=DTMF_DURATION_MS_SHORT, 1=DTMF_DURATION_MS_LONG
 uint8_t EEMEM _g_l1_hold_time_eeprom = 0;    // 0=SPECIAL_L1_HOLD_TIME_LONG, 1=SPECIAL_L1_HOLD_TIME_SHORT
+uint8_t EEMEM _g_lock_pin_eeprom[3] = { DIGIT_OFF, DIGIT_OFF, DIGIT_OFF };
+uint8_t EEMEM _g_lock_state_eeprom = 0;
 runstate_t _g_run_state;
 
 int main(void)
@@ -165,6 +169,8 @@ int main(void)
     runstate_t *rs = &_g_run_state;
     bool dial_pin_prev_state;
     rs->pending_pauses = 0;
+    uint8_t lock_state = eeprom_read_byte(&_g_lock_state_eeprom);
+    rs->locked = (lock_state == 1);
     init();
 
     // Wait for the decoupling capacitors to charge
@@ -265,14 +271,22 @@ int main(void)
                     }
                     else if (rs->state == STATE_SPECIAL_L2)
                     {
-                        // Erdtaste L2 - enter Erdtaste speed dial programming
-                        wdt_stop();
-                        rs->speed_dial_index = SPEED_DIAL_ERDTASTE;
-                        rs->special_hold_state = STATE_PROGRAM_ERDTASTE;
-                        rs->speed_dial_digit_index = 0;
-                        for (uint8_t i = 0; i < SPEED_DIAL_SIZE; i++)
-                            rs->speed_dial_digits[i] = DIGIT_OFF;
-                        rs->state = STATE_PROGRAM_ERDTASTE;
+                        if (rs->locked)
+                        {
+                            dtmf_generate_tone(DIGIT_TUNE_DESC, 200);
+                            rs->state = STATE_DIAL;
+                        }
+                        else
+                        {
+                            // Erdtaste L2 - enter Erdtaste speed dial programming
+                            wdt_stop();
+                            rs->speed_dial_index = SPEED_DIAL_ERDTASTE;
+                            rs->special_hold_state = STATE_PROGRAM_ERDTASTE;
+                            rs->speed_dial_digit_index = 0;
+                            for (uint8_t i = 0; i < SPEED_DIAL_SIZE; i++)
+                                rs->speed_dial_digits[i] = DIGIT_OFF;
+                            rs->state = STATE_PROGRAM_ERDTASTE;
+                        }
                     }
                     else if (rs->state == STATE_PROGRAM_SD || rs->state == STATE_PROGRAM_ERDTASTE)
                     {
@@ -476,16 +490,75 @@ static void check_service_codes(runstate_t *rs)
         if (memcmp(rs->service_code_buf, _g_service_codes[i].code, 5) == 0)
         {
             if (_g_service_codes[i].action == SERVICE_FACTORY_RESET)
-            {
                 handle_factory_reset(rs);
-            }
-            // Add future commands here
-            
+                
             // Consume the code
             memset(rs->service_code_buf, DIGIT_OFF, 5); 
-            break;
+            return;                      
         }
     }
+
+    // Check lock toggle - *#PPP where PPP matches stored PIN or no PIN set
+    if (rs->service_code_buf[0] == DIGIT_STAR && 
+        rs->service_code_buf[1] == DIGIT_POUND &&
+        rs->service_code_buf[2] >= 0 && rs->service_code_buf[2] <= 9 &&
+        rs->service_code_buf[3] >= 0 && rs->service_code_buf[3] <= 9 &&
+        rs->service_code_buf[4] >= 0 && rs->service_code_buf[4] <= 9)
+    {
+        handle_lock_toggle(rs);
+        // Consume the code
+        memset(rs->service_code_buf, DIGIT_OFF, 5); 
+    }
+}
+
+static void handle_factory_reset(runstate_t *rs)
+{
+    if (rs->locked)
+    {
+        dtmf_generate_tone(DIGIT_TUNE_DESC, 200);
+        return;
+    }
+    dtmf_generate_tone(DIGIT_TUNE_DESC, 800);
+    for (uint16_t i = 0; i < 512; i++)
+    {
+        wdt_reset();
+        eeprom_write_byte((uint8_t*)i, 0xFF);
+    }
+    rs->dtmf_duration = DTMF_DURATION_MS_SHORT;
+    rs->l1_hold_time = SLEEP_2S;
+    for (uint8_t i = 0; i < 5; i++)
+        rs->service_code_buf[i] = DIGIT_OFF;
+    dtmf_generate_tone(DIGIT_TUNE_ASC, 400);
+}
+
+static void handle_lock_toggle(runstate_t *rs)
+{
+    uint8_t pin[3];
+    eeprom_read_block(pin, &_g_lock_pin_eeprom, 3);
+
+    if (pin[0] == (uint8_t)DIGIT_OFF)
+    {
+        // No PIN set - set PIN and lock
+        eeprom_write_byte(&_g_lock_pin_eeprom[0], rs->service_code_buf[2]);
+        eeprom_write_byte(&_g_lock_pin_eeprom[1], rs->service_code_buf[3]);
+        eeprom_write_byte(&_g_lock_pin_eeprom[2], rs->service_code_buf[4]);
+        eeprom_write_byte(&_g_lock_state_eeprom, 1);
+        rs->locked = true;
+        dtmf_generate_tone(DIGIT_TUNE_ASC, 400);
+    }
+    else if (pin[0] == rs->service_code_buf[2] &&
+             pin[1] == rs->service_code_buf[3] &&
+             pin[2] == rs->service_code_buf[4])
+    {
+        // Correct PIN - unlock and clear
+        eeprom_write_byte(&_g_lock_pin_eeprom[0], (uint8_t)DIGIT_OFF);
+        eeprom_write_byte(&_g_lock_pin_eeprom[1], (uint8_t)DIGIT_OFF);
+        eeprom_write_byte(&_g_lock_pin_eeprom[2], (uint8_t)DIGIT_OFF);
+        eeprom_write_byte(&_g_lock_state_eeprom, 0);
+        rs->locked = false;
+        dtmf_generate_tone(DIGIT_TUNE_DESC, 400);
+    }
+    // Wrong PIN - silence
 }
 
 static void clear_speed_dial_slot(runstate_t *rs, uint8_t slot_index)
@@ -536,21 +609,10 @@ static void process_dialed_digit(runstate_t *rs)
     
     if (rs->state == STATE_DIAL)
     {
-        // Standard (no speed dial, no special function) mode
-        // Generate DTMF code
-        dtmf_generate_tone(rs->dialed_digit, rs->dtmf_duration);
-
-        if (rs->dialed_digit == L2_STAR || rs->dialed_digit == L2_POUND)
+        digit_to_buffer = rs->dialed_digit;
+        if (!rs->locked)
         {
-            digit_to_buffer = (rs->dialed_digit == L2_STAR) ? DIGIT_STAR : DIGIT_POUND;
-            // Store * or # in redial memory
-            flush_pending_pauses(rs);
-            store_digit_to_redial(rs, digit_to_buffer);
-        }
-        else 
-        {
-            digit_to_buffer = rs->dialed_digit;
-            // During regular dial always save into the 'Redial' position of the speed dial memory
+            dtmf_generate_tone(rs->dialed_digit, rs->dtmf_duration);
             flush_pending_pauses(rs);
             store_digit_to_redial(rs, digit_to_buffer);
         }
@@ -611,6 +673,12 @@ static void process_dialed_digit(runstate_t *rs)
     }
     else if (rs->state == STATE_SPECIAL_L2)
     {
+        if (rs->locked)
+        {
+            dtmf_generate_tone(DIGIT_TUNE_DESC, 200);
+            rs->state = STATE_DIAL;
+            return;
+        }
         // Digit 1 - cycle DTMF duration (80ms / 200ms)
         if (rs->dialed_digit == L2_STAR)
         {
@@ -749,26 +817,14 @@ static void process_dialed_digit(runstate_t *rs)
         append_digit_to_slot(rs, rs->dialed_digit, DIGIT_BEEP_LOW);
     }
 
-    if (digit_to_buffer != DIGIT_OFF)
+    if (rs->speed_dial_digit_index <= 5)
     {
-        push_to_service_buffer(rs, digit_to_buffer);
-        check_service_codes(rs);
+        if (digit_to_buffer != DIGIT_OFF)
+        {
+            push_to_service_buffer(rs, digit_to_buffer);
+            check_service_codes(rs);
+        }
     }
-}
-
-static void handle_factory_reset(runstate_t *rs)
-{
-    dtmf_generate_tone(DIGIT_TUNE_DESC, 800);
-    for (uint16_t i = 0; i < 512; i++)
-    {
-        wdt_reset();
-        eeprom_write_byte((uint8_t*)i, 0xFF);
-    }
-    rs->dtmf_duration = DTMF_DURATION_MS_SHORT;
-    rs->l1_hold_time = SLEEP_2S;
-    for (uint8_t i = 0; i < 5; i++)
-        rs->service_code_buf[i] = DIGIT_OFF;
-    dtmf_generate_tone(DIGIT_TUNE_ASC, 400);
 }
 
 // Dial speed dial number (it erases current SD number in the global structure)
