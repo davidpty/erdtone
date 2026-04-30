@@ -1,17 +1,10 @@
 # ErdTone - Rotary Dial Pulse-to-DTMF Converter
 
-Bring a vintage rotary phone back to life on a modern telephone exchange. ErdTone 
-converts pulse dialing to DTMF tones in real time, running on a single ATtiny85 
-hidden inside the phone with no visible modifications.
+Bring a vintage rotary phone back to life on a modern telephone exchange. ErdTone converts pulse dialing to DTMF tones in real time, running on a single ATtiny85 hidden inside the phone with no visible modifications.
 
-Built around the Siemens W48 with full support for the `Earth key` (German: Erdtaste),
-it goes beyond basic pulse conversion: last-number redial, speed dial with pause 
-support, `*` and `#` via hold gestures, auto-dial hotline on pickup, and adjustable 
-DTMF timing for compatibility with older exchanges. Everything is configured directly 
-from the rotary dial - no computer needed after flashing.
+Built around the Siemens W48 with full support for the `Earth key` (German: Erdtaste), it goes beyond basic pulse conversion: last-number redial, speed dial with pause support, `*` and `#` via hold gestures, auto-dial hotline on pickup, and adjustable DTMF timing for compatibility with older exchanges. Everything is configured directly from the rotary dial - no computer needed after flashing.
 
-This project is a fork of the rotarydial firmware, extended with hotline auto-dial,
-Earth key redial, Erdtaste speed dial, and configurable DTMF and menu timing.
+This project is a fork of the rotarydial firmware, extended with hotline auto-dial, Earth key redial, Erdtaste speed dial, and configurable DTMF and menu timing.
 
 ## Hardware
 
@@ -29,8 +22,7 @@ Needed build parts:
 
 ## Circuit
 
-A Fritzing layout is included with a compact footprint designed to fit inside the 
-W48 housing without modifications. See `ErdTone.fzz`.
+A Fritzing layout is included with a compact footprint designed to fit inside the W48 housing without modifications. See `ErdTone.fzz`.
 
 ## Wiring
 
@@ -79,11 +71,7 @@ make erase
 
 ### Normal dialing
 
-Dial a number and release. The firmware sends the matching DTMF tone.
-If you pause for more than ~3 seconds between digits, a pause is automatically inserted 
-into the redial memory at that point. If you wait more than ~6 seconds, two pauses are inserted.
-This allows redial to correctly replay numbers that require waiting for an automated phone menu 
-or office switchboard to respond.
+Dial a number and release. The firmware sends the matching DTMF tone. If you pause for more than ~3 seconds between digits, a pause is automatically inserted  into the redial memory at that point. If you wait more than ~6 seconds, two pauses are inserted. This allows redial to correctly replay numbers that require waiting for an automated phone menu or office switchboard to respond.
 
 ### Earth key
 
@@ -105,8 +93,8 @@ Use the rotary dial for special functions:
   - `4` to `9`, `0` = dial the stored speed-dial number
 - Keep holding until the second beep:
   - `4` to `9`, `0` = enter programming mode for that slot
-  - `1` = cycle DTMF tone duration (80ms / 200ms). Two quick beeps = 80ms, two slow beeps = 200ms.
-  - `2` = cycle menu hold time (1s / 2s). Two quick beeps = 1s, two slow beeps = 2s.
+  - `1` = cycle DTMF tone duration (80ms / 200ms).
+  - `2` = cycle menu hold time (1s / 2s).
   - `3` = enter hotline setup
         
 ### Speed dial programming
@@ -122,8 +110,7 @@ Notes:
 - Each digit is written to EEPROM immediately.
 - `*` and `#` or `pause` can be stored by dialing `1`, `2` or `3`, holding until the first beep, then releasing.
 - The Earth key has its own dedicated speed dial slot programmed via Earth key hold to second beep.
-- Press `Earth key` during programming to load the last dialed number into the current slot. 
-  The number is saved immediately and you can continue adding digits, `*`, `#`, or pauses before hanging up.
+- During programming, you can copy into the current slot: press `Earth key` to load the last dialed number, or dial a source speed-dial slot (`4` to `9`, `0`) and hold until the first beep.
 - Hold `0` until the second beep to clear the current slot (works for Earth key slot too).
 
 ### Hotline setup
@@ -152,25 +139,26 @@ Service codes are entered during a normal call using the rotary hold menu for `*
 
 ### Lock / Unlock
 
-Dial `*#PPP` where `PPP` is a 3-digit PIN using digits only.
+Dial lock codes with a 3-digit PIN `PPP` using digits only.
 
-- First use: sets the PIN and locks the phone. Confirmed with ascending tune.
-- Same code again: unlocks and clears the PIN. Confirmed with descending tune.
-- Wrong PIN: no feedback, phone stays locked.
+- If no PIN is set, `**PPP` sets the PIN and locks programming.
+- If no PIN is set, `*#PPP` sets the PIN and locks programming plus dialing.
+- If any lock is active, `**PPP` or `*#PPP` with the correct PIN permanently unlocks and clears the PIN.
+- If any lock is active, `##PPP` with the correct PIN temporarily unlocks the phone for the current call only.
 
-When locked:
+When programming-locked:
+- Normal dialing still works
+- Programming, settings changes and factory reset are blocked
+
+When fully locked:
 - Normal dialing is blocked
-- Speed dial, redial, hotline and `Earth key` functions still work
-- Programming and settings changes are blocked
-- Factory reset is blocked
+- Speed dial, redial and hotline still work
+- Programming, settings changes and factory reset are blocked
 
 ### Factory reset
 
-Dial `*#0#*` to erase all stored numbers, speed dial slots, hotline config, and reset DTMF duration and menu hold time to defaults. Blocked when locked. Descending tune plays during reset, ascending tune confirms completion.
+Dial `*#0#*` to erase all stored numbers, speed dial slots, hotline config, and reset DTMF duration and menu hold time to defaults. Blocked when locked.
 
 ## Credits
 
-ErdTone builds on the work of [Boris Cherkasskiy](http://boris0.blogspot.ca/2013/09/rotary-dial-for-digital-age.html)
-who created the original firmware in 2011, [Arnie Weber](https://bitbucket.org/310weber/rotary_dial/)
-who reworked the hardware in 2015, and [Matthew Millman](http://tech.mattmillman.com/)
-who cleaned up the implementation in 2018.
+ErdTone builds on the work of [Boris Cherkasskiy](http://boris0.blogspot.ca/2013/09/rotary-dial-for-digital-age.html) who created the original firmware in 2011, [Arnie Weber](https://bitbucket.org/310weber/rotary_dial/) who reworked the hardware in 2015, and [Matthew Millman](http://tech.mattmillman.com/) who cleaned up the implementation in 2018.
