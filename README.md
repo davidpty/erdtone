@@ -139,10 +139,10 @@ Service codes are entered during a normal call using the rotary hold menu for `*
 
 ### Lock / Unlock
 
-Dial lock codes with a 3-digit PIN `PPP` using digits only.
+Dial lock codes with a 3-digit PIN PPP using digits only.
 
 - If no PIN is set, `**PPP` sets the PIN and locks programming.
-- If no PIN is set, `*#PPP` sets the PIN and locks programming plus dialing.
+- If no PIN is set, `*#PPP` sets the PIN and locks programming and digits 4–9 and 0 become direct speed-dial keys.
 - If any lock is active, `**PPP` or `*#PPP` with the correct PIN permanently unlocks and clears the PIN.
 - If any lock is active, `##PPP` with the correct PIN temporarily unlocks the phone for the current call only.
 
@@ -152,8 +152,15 @@ When programming-locked:
 
 When fully locked:
 - Normal dialing is blocked
-- Speed dial, redial and hotline still work
+- Digits 4–9 and 0 directly dial their assigned speed-dial slot (no hold required)
+- Erdtaste directly dials the Erdtaste speed-dial slot
 - Programming, settings changes and factory reset are blocked
+
+To unlock from a fully locked phone:
+
+Dial * or # twice via L1 hold (any combination: **, ##, *#, #*) as the very first two digits after pickup — this arms PIN entry mode
+Then dial the three PIN digits directly (4–9, 0) — these feed the unlock sequence without dialing any speed-dial slots
+Use **PPP or *#PPP to permanently unlock, or ##PPP to unlock for the current call only
 
 ### Factory reset
 

@@ -150,6 +150,7 @@ static void handle_session_unlock(runstate_t *rs);
 static void wdt_timer_start(uint8_t delay);
 static void start_sleep(void);
 static void wdt_stop(void);
+static bool in_pin_entry_mode(runstate_t *rs);
 
 // Map speed dial numbers to memory locations
 const int8_t _g_speed_dial_loc[] =
@@ -341,10 +342,18 @@ int main(void)
                     }                                    
                     else if (rs->state == STATE_DIAL && !rs->suppress_first_release)
                     {
-                        // Erdtaste short press - trigger redial
                         wdt_stop();
-                        read_speed_dial(SPEED_DIAL_REDIAL, rs->speed_dial_digits);
-                        dial_speed_dial_number(rs->speed_dial_digits, SPEED_DIAL_REDIAL, rs->dtmf_duration);
+                        if (dial_locked(rs))
+                        {
+                            // Locked: Erdtaste dials the Erdtaste speed-dial slot directly
+                            dial_speed_dial_number(rs->speed_dial_digits, SPEED_DIAL_ERDTASTE, rs->dtmf_duration);
+                        }
+                        else
+                        {
+                            // Normal: Erdtaste triggers redial
+                            read_speed_dial(SPEED_DIAL_REDIAL, rs->speed_dial_digits);
+                            dial_speed_dial_number(rs->speed_dial_digits, SPEED_DIAL_REDIAL, rs->dtmf_duration);
+                        }
                     }
                     else
                     {
@@ -590,7 +599,8 @@ static void check_service_codes(runstate_t *rs)
     {
         handle_lock_code(rs, LOCK_FULL);
         // Consume the code
-        memset(rs->service_code_buf, DIGIT_OFF, 5); 
+        memset(rs->service_code_buf, DIGIT_OFF, 5);
+        clear_current_program_buffer(rs);
     }
 
     // Check programming lock/permanent unlock - **PPP
@@ -603,6 +613,7 @@ static void check_service_codes(runstate_t *rs)
         handle_lock_code(rs, LOCK_PROGRAM);
         // Consume the code
         memset(rs->service_code_buf, DIGIT_OFF, 5);
+        clear_current_program_buffer(rs);
     }
 
     // Check session unlock - ##PPP
@@ -615,7 +626,9 @@ static void check_service_codes(runstate_t *rs)
         handle_session_unlock(rs);
         // Consume the code
         memset(rs->service_code_buf, DIGIT_OFF, 5);
+        clear_current_program_buffer(rs);
     }
+
 }
 
 static void handle_factory_reset(runstate_t *rs)
@@ -633,9 +646,10 @@ static void handle_factory_reset(runstate_t *rs)
     }
     rs->dtmf_duration = DTMF_DURATION_MS_SHORT;
     rs->l1_hold_time = SLEEP_2S;
+    rs->lock_state = LOCK_NONE;
     for (uint8_t i = 0; i < 5; i++)
         rs->service_code_buf[i] = DIGIT_OFF;
-        dtmf_generate_tone(DIGIT_TUNE_ASC, 400);
+    dtmf_generate_tone(DIGIT_TUNE_ASC, 400);
 }
 
 static bool dial_locked(runstate_t *rs)
@@ -738,6 +752,18 @@ static void flush_pending_pauses(runstate_t *rs)
     rs->pending_pauses = 0;
 }
 
+// PIN entry mode is active when the first two digits dialed this call were both
+// * or # (entered via L1) and the three PIN digits have not yet all been received.
+// The check fires before the index increment, so the three PIN digits arrive with
+// index at 2, 3 and 4 respectively - hence the upper bound is <= 4, not <= 5.
+static bool in_pin_entry_mode(runstate_t *rs)
+{
+    return rs->speed_dial_digit_index >= 2
+        && rs->speed_dial_digit_index <= 4
+        && (rs->speed_dial_digits[0] == DIGIT_STAR || rs->speed_dial_digits[0] == DIGIT_POUND)
+        && (rs->speed_dial_digits[1] == DIGIT_STAR || rs->speed_dial_digits[1] == DIGIT_POUND);
+}
+
 static void handle_dial_state(runstate_t *rs, int8_t *digit_to_buffer)
 {
     *digit_to_buffer = rs->dialed_digit;
@@ -746,6 +772,27 @@ static void handle_dial_state(runstate_t *rs, int8_t *digit_to_buffer)
         dtmf_generate_tone(rs->dialed_digit, rs->dtmf_duration);
         flush_pending_pauses(rs);
         store_digit_to_redial(rs, *digit_to_buffer);
+    }
+    else if (in_pin_entry_mode(rs))
+    {
+        // Mid-unlock sequence: feed digit to service buffer via digit_to_buffer,
+        // increment index so the window advances, but do not dial anything.
+        rs->speed_dial_digits[rs->speed_dial_digit_index] = rs->dialed_digit;
+        rs->speed_dial_digit_index++;
+        dtmf_generate_tone(DIGIT_BEEP_LOW, rs->dtmf_duration);
+    }
+    else if (_g_speed_dial_loc[rs->dialed_digit] >= 0)
+    {
+        // Locked direct speed-dial: digits 4-9 and 0 fire their slot immediately.
+        dial_speed_dial_number(rs->speed_dial_digits, _g_speed_dial_loc[rs->dialed_digit], rs->dtmf_duration);
+        *digit_to_buffer = DIGIT_OFF;  // do not feed service buffer
+    }
+    else
+    {
+        // Digits 1, 2, 3 with no PIN entry mode active: no speed-dial slot,
+        // play descending tone as "not available" feedback, same as empty slot.
+        dtmf_generate_tone(DIGIT_TUNE_DESC, 400);
+        *digit_to_buffer = DIGIT_OFF;
     }
 }
 
@@ -792,7 +839,10 @@ static bool handle_special_l1_state(runstate_t *rs, int8_t *digit_to_buffer)
     if (rs->dialed_digit == L2_STAR)
     {
         // SF 1-*
-        dtmf_generate_tone(DIGIT_STAR, rs->dtmf_duration);
+        if (dial_locked(rs))
+            dtmf_generate_tone(DIGIT_BEEP_LOW, rs->dtmf_duration);
+        else
+            dtmf_generate_tone(DIGIT_STAR, rs->dtmf_duration);
         *digit_to_buffer = DIGIT_STAR;
         store_digit_to_redial(rs, DIGIT_STAR);
         rs->state = STATE_DIAL;
@@ -800,16 +850,26 @@ static bool handle_special_l1_state(runstate_t *rs, int8_t *digit_to_buffer)
     else if (rs->dialed_digit == L2_POUND)
     {
         // SF 2-#
-        dtmf_generate_tone(DIGIT_POUND, rs->dtmf_duration);
+        if (dial_locked(rs))
+            dtmf_generate_tone(DIGIT_BEEP_LOW, rs->dtmf_duration);
+        else
+            dtmf_generate_tone(DIGIT_POUND, rs->dtmf_duration);
         *digit_to_buffer = DIGIT_POUND;
         store_digit_to_redial(rs, DIGIT_POUND);
         rs->state = STATE_DIAL;
     }
     else if (rs->dialed_digit == L2_REDIAL)
     {
-        // SF 3 (Redial)
-        wdt_stop();
-        dial_speed_dial_number(rs->speed_dial_digits, SPEED_DIAL_REDIAL, rs->dtmf_duration);
+        // SF 3 (Redial) - not available when dial is locked
+        if (!dial_locked(rs))
+        {
+            wdt_stop();
+            dial_speed_dial_number(rs->speed_dial_digits, SPEED_DIAL_REDIAL, rs->dtmf_duration);
+        }
+        else
+        {
+            dtmf_generate_tone(DIGIT_TUNE_DESC, 400);
+        }
         rs->state = STATE_DIAL;
     }
     else if (_g_speed_dial_loc[rs->dialed_digit] >= 0)
