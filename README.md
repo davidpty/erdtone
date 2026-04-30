@@ -59,7 +59,7 @@ sudo apt update && sudo apt install gcc-avr avr-libc binutils-avr avrdude make
 Build, flash and set fuses:
 ```bash
 make install              # default 4 MHz (external crystal)
-make CLOCK_MODE=8 install # 8 MHz (internal oscillator)
+make CLOCK_MODE=8 install # 8 MHz (internal oscillator, not accurate enough, only for testing)
 ```
 
 Erase EEPROM (clears all stored numbers and settings):
