@@ -2,9 +2,9 @@
 
 Bring a vintage rotary phone back to life on a modern telephone exchange. ErdTone converts pulse dialing to DTMF tones in real time, running on a single ATtiny85 hidden inside the phone with no visible modifications.
 
-Built around the Siemens W48 with full support for the `Earth key` (German: Erdtaste), it goes beyond basic pulse conversion: last-number redial, speed dial with pause support, `*` and `#` via hold gestures, auto-dial hotline on pickup, and adjustable DTMF timing for compatibility with older exchanges. Everything is configured directly from the rotary dial - no computer needed after flashing.
+Built around the Siemens W48 with full support for the `Earth key` (German: Erdtaste), it goes beyond basic pulse conversion: last-number redial, speed dial with pause support, `*` and `#` via hold gestures, auto-dial on pickup, and adjustable DTMF timing for compatibility with older exchanges. Everything is configured directly from the rotary dial - no computer needed after flashing.
 
-This project is a fork of the rotarydial firmware, extended with hotline auto-dial, Earth key redial, Erdtaste speed dial, and configurable DTMF and menu timing.
+This project is a fork of the rotarydial firmware, extended with auto-dial, Earth key redial, Erdtaste speed dial, and configurable DTMF and menu timing.
 
 ## Hardware
 
@@ -80,7 +80,7 @@ Dial a number and release. The firmware sends the matching DTMF tone. If you pau
 - Brief press and release: redial the last number
 - Hold until first beep: dial the stored Earth key speed dial number
 - Hold until second beep: program the Earth key speed dial number
-- If pressed during startup, hotline calling is canceled for that cycle.
+- If pressed during startup, auto-dial calling is canceled for that cycle.
 
 ### Rotary hold menu
 
@@ -95,7 +95,7 @@ Use the rotary dial for special functions:
   - `4` to `9`, `0` = enter programming mode for that slot
   - `1` = cycle DTMF tone duration (80ms / 200ms).
   - `2` = cycle menu hold time (1s / 2s).
-  - `3` = enter hotline setup
+  - `3` = enter auto-dial setup
         
 ### Speed dial programming
 
@@ -113,16 +113,16 @@ Notes:
 - During programming, you can copy into the current slot: press `Earth key` to load the last dialed number, or dial a source speed-dial slot (`4` to `9`, `0`) and hold until the first beep.
 - Hold `0` until the second beep to clear the current slot (works for Earth key slot too).
 
-### Hotline setup
+### Auto-dial setup
 
-Hotline is stored in one of the speed-dial slots and auto-dials after power-up if enabled.
+Auto-dial is stored in one of the speed-dial slots and auto-dials after power-up if enabled.
 
 Set it:
 
 1. Dial `3`.
 2. Hold until the second beep, then release.
-3. Dial the speed-dial slot, or press `Earth key` to use the Earth key speed dial number as the hotline.
-4. The hotline is now saved with the default `5` second delay.
+3. Dial the speed-dial slot, or press `Earth key` to use the Earth key speed dial number as the auto-dial.
+4. The auto-dial is now saved with the default `5` second delay.
 5. Optional: dial a delay digit from `0` to `9` to override it.
 
 Clear it:
@@ -131,7 +131,7 @@ Clear it:
 2. Keep holding until the second beep, then release.
 3. Hold `0` until the second beep, then release to clear it.
 
-Pressing `Earth key` or starting to dial during startup cancels the hotline call for that cycle.
+Pressing `Earth key` or starting to dial during startup cancels the auto-dial call for that cycle.
 
 ## Service Codes
 
@@ -141,7 +141,7 @@ Service codes are entered during a normal call using the rotary hold menu for `*
 
 Dial lock codes with a 3-digit PIN PPP using digits only.
 
-- If no PIN is set, `**PPP` sets the PIN and locks programming.
+- If no PIN is set, `**PPP` sets the PIN and locks programming (3 digits from 0-9).
 - If no PIN is set, `*#PPP` sets the PIN and locks programming and digits 4–9 and 0 become direct speed-dial keys.
 - If any lock is active, `**PPP` or `*#PPP` with the correct PIN permanently unlocks and clears the PIN.
 - If any lock is active, `##PPP` with the correct PIN temporarily unlocks the phone for the current call only.
@@ -158,13 +158,13 @@ When fully locked:
 
 To unlock from a fully locked phone:
 
-Dial * or # twice via L1 hold (any combination: **, ##, *#, #*) as the very first two digits after pickup — this arms PIN entry mode
-Then dial the three PIN digits directly (4–9, 0) — these feed the unlock sequence without dialing any speed-dial slots
+Dial * or # twice via L1 hold (any combination: **, ##, *#, #*) as the very first two digits after pickup - this arms PIN entry mode
+Then dial the three PIN digits directly - these feed the unlock sequence without dialing any speed-dial slots
 Use **PPP or *#PPP to permanently unlock, or ##PPP to unlock for the current call only
 
 ### Factory reset
 
-Dial `*#0#*` to erase all stored numbers, speed dial slots, hotline config, and reset DTMF duration and menu hold time to defaults. Blocked when locked.
+Dial `*#0#*` to erase all stored numbers, speed dial slots, auto-dial config, and reset DTMF duration and menu hold time to defaults. Blocked when locked.
 
 ## Credits
 
