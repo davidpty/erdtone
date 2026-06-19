@@ -1,4 +1,4 @@
-# ErdTone - Rotary Dial Pulse-to-DTMF Converter
+# ErdTone
 
 Bring a vintage rotary phone back to life on a modern telephone exchange. ErdTone converts pulse dialing to DTMF tones in real time, running on a single ATtiny85 hidden inside the phone with no visible modifications.
 
